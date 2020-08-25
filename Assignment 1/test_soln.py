@@ -23,3 +23,4 @@ if __name__ == '__main__':
             correct += 1
 
     print(correct*100/total)
+
