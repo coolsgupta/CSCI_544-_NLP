@@ -31,14 +31,14 @@ class Predictor:
     def get_last_name(self, name_tokens):
         for i, name_token in enumerate(name_tokens):
             if name_token not in self.first_names:
-                return name_token[i:]
+                return name_tokens[i:]
 
         return name_tokens[-1:]
 
     def predict_last_name(self, name_combi):
         names = name_combi.split(' AND ')
-        names_tokens = [[name.split(' ')] for name in names]
-        last_name_present = False if len(names_tokens[0]) == 1 else self.check_last_name_presence(names[0])
+        names_tokens = [name.split(' ') for name in names]
+        last_name_present = False if len(names_tokens[0]) == 1 else self.check_last_name_presence(names_tokens[0])
         predicted_name = names[0]
 
         if not last_name_present:
@@ -54,6 +54,8 @@ class Predictor:
 
             correct = 0
             total = 0
+            res = []
+            wrong = []
 
             for row in reader:
                 predictiction = self.predict_last_name(row[0].upper())
@@ -64,10 +66,15 @@ class Predictor:
                 if predictiction == row[1]:
                     correct += 1
 
-        return predicted_names, correct, total, correct/total
+                else:
+                    wrong.append([predictiction, row[1]])
+
+                res.append([predictiction, row[1], predictiction == row[1]])
+
+        return predicted_names, correct, total, correct/total, res, wrong
 
 
 if __name__ == '__main__':
     last_name_predictor = Predictor('dev-key.csv')
-    predicted_full_names, correct_preds, total_preds, accuracy = last_name_predictor.predict_last_names_for_names_file()
+    predicted_full_names, correct_preds, total_preds, accuracy, res, wrongs = last_name_predictor.predict_last_names_for_names_file()
     print('Done')
