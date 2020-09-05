@@ -1,24 +1,5 @@
 import csv
 
-
-def get_last_name(name):
-    names = name.lower().split('and')
-    names_tokens = [[y.strip() for y in x.split()] for x in names]
-    names_tokens[0].extend(names_tokens[1][len(names_tokens[0] ):])
-    return ' '.join(names_tokens[0]).upper()
-
-
-def get_last_name_v2(name):
-    split_names = name.split(' AND ')
-    names_tokens = [[y.strip() for y in x.split()] for x in split_names]
-    # if len(names_tokens[0]) < len(names_tokens[1]) or len(names_tokens[0]) == 1:
-    #     names_tokens[0].append(names_tokens[1][-1])
-    if len(names_tokens[0]) <= 2:
-        names_tokens[0].append(names_tokens[1][-1])
-
-    return ' '.join(names_tokens[0])
-
-
 class Utils:
     @staticmethod
     def read_name_file(name_file):
