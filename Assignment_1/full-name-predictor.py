@@ -1,5 +1,6 @@
 import csv
 
+
 class Utils:
     @staticmethod
     def read_name_file(name_file):
@@ -42,10 +43,9 @@ class Predictor:
 
         if not last_name_present:
             predicted_last_name = ' '.join(self.get_last_name(names_tokens[1]))
-            predicted_name = predicted_name +
+            predicted_name = ' '.join([predicted_name, predicted_last_name])
 
-        return ' '.join([names[0], predicted_last_name])
-
+        return predicted_name
 
     def predict_last_names_for_names_file(self):
         predicted_names = []
@@ -60,14 +60,14 @@ class Predictor:
                 predicted_names.append(predictiction)
 
                 # todo: check code remove before submission
-                total+=1
+                total += 1
                 if predictiction == row[1]:
                     correct += 1
 
         return predicted_names, correct, total, correct/total
 
 
-
-
 if __name__ == '__main__':
-
+    last_name_predictor = Predictor('dev-key.csv')
+    predicted_full_names, correct_preds, total_preds, accuracy = last_name_predictor.predict_last_names_for_names_file()
+    print('Done')
