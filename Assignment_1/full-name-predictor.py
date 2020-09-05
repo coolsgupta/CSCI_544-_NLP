@@ -60,32 +60,15 @@ class Predictor:
         with open(self.test_file, 'r') as test_file:
             reader = csv.reader(test_file)
 
-            correct = 0
-            total = 0
-            res = []
-            wrong = []
-
             for row in reader:
                 predictiction = self.predict_last_name(row[0].upper())
                 predicted_names.append(predictiction)
                 results.append([row[0], predictiction])
-
-                # todo: check code remove before submission
-                total += 1
-                if predictiction == row[1]:
-                    correct += 1
-
-                else:
-                    wrong.append([predictiction, row[1]])
-
-                res.append([predictiction, row[1], predictiction == row[1]])
-
-        return results, predicted_names, correct, total, correct/total, res, wrong
-
+            return results
 
 if __name__ == '__main__':
     test_file_path = sys.argv[1]
     last_name_predictor = Predictor(test_file_path)
-    prediction_results, predicted_full_names, correct_preds, total_preds, accuracy, res, wrongs = last_name_predictor.predict_last_names_for_names_file()
+    prediction_results= last_name_predictor.predict_last_names_for_names_file()
     Utils.write_results(prediction_results, 'full-name-output.csv')
     print('Done')
