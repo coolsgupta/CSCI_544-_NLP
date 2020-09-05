@@ -19,7 +19,6 @@ def get_last_name_v2(name):
     return ' '.join(names_tokens[0])
 
 
-
 class Utils:
     @staticmethod
     def read_name_file(name_file):
@@ -40,12 +39,32 @@ class Predictor:
         self.first_names = Utils.get_first_names()
         self.test_file = test_file_path
 
-    def check_last_name_presence(self, name):
+    def check_last_name_presence(self, name_tokens):
+        for i, name_token in enumerate(name_tokens):
+            if name_token not in self.first_names:
+                return True
 
+        return False
+
+    def get_last_name(self, name_tokens):
+        for i, name_token in enumerate(name_tokens):
+            if name_token not in self.first_names:
+                return name_token[i:]
+
+        return name_tokens[-1:]
 
     def predict_last_name(self, name_combi):
         names = name_combi.split(' AND ')
-        self.check_last_name_presence(names[0])
+        names_tokens = [[name.split(' ')] for name in names]
+        last_name_present = False if len(names_tokens[0]) == 1 else self.check_last_name_presence(names[0])
+        predicted_name = names[0]
+
+        if not last_name_present:
+            predicted_last_name = ' '.join(self.get_last_name(names_tokens[1]))
+            predicted_name = predicted_name +
+
+        return ' '.join([names[0], predicted_last_name])
+
 
     def predict_last_names_for_names_file(self):
         predicted_names = []
@@ -70,21 +89,4 @@ class Predictor:
 
 
 if __name__ == '__main__':
-    correct = 0
-    total = 0
-
-    with open('Assignment_1//dev-key.csv') as data_file:
-        reader = csv.reader(data_file)
-
-        for row in reader:
-            total += 1
-            name = get_last_name(row[0])
-
-            if name == row[1]:
-                correct += 1
-
-    print(correct*100/total)
-
-    ##################################################3
-
 
