@@ -29,9 +29,9 @@ class Predictor:
         return False
 
     def get_last_name(self, name_tokens):
-        for i, name_token in enumerate(name_tokens):
+        for i, name_token in enumerate(name_tokens[1:]):
             if name_token not in self.first_names:
-                return name_tokens[i:]
+                return name_tokens[i+1:]
 
         return name_tokens[-1:]
 
