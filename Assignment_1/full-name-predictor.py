@@ -1,6 +1,7 @@
 import csv
 import sys
 
+
 class Utils:
     @staticmethod
     def read_name_file(name_file):
@@ -28,11 +29,16 @@ class Predictor:
         self.first_names = Utils.get_first_names()
         self.test_file = test_file_path
 
-    def check_last_name_presence(self, name_tokens):
+    def get_first_name_index(self, name_tokens):
         for i, name_token in enumerate(name_tokens):
-            if name_token not in self.first_names:
-                return True
+            if name_token in self.first_names:
+                return i
 
+        return 0
+
+    def check_last_name_presence(self, name_tokens):
+        if name_tokens[-1] not in self.first_names:
+            return True
         return False
 
     def get_last_name(self, name_tokens):
@@ -45,7 +51,10 @@ class Predictor:
     def predict_last_name(self, name_combi):
         names = name_combi.split(' AND ')
         names_tokens = [name.split(' ') for name in names]
-        last_name_present = False if len(names_tokens[0]) == 1 else self.check_last_name_presence(names_tokens[0])
+        last_name_present = False if len(names_tokens[0]) == 1 \
+            else True if len(names_tokens[0][self.get_first_name_index(names_tokens[0]):]) >= 3 \
+            else self.check_last_name_presence(names_tokens[0])
+
         predicted_name = names[0]
 
         if not last_name_present:
@@ -84,7 +93,7 @@ class Predictor:
 
 
 if __name__ == '__main__':
-    test_file_path = sys.argv[1]
+    test_file_path = 'dev-key.csv'
     last_name_predictor = Predictor(test_file_path)
     prediction_results, predicted_full_names, correct_preds, total_preds, accuracy, res, wrongs = last_name_predictor.predict_last_names_for_names_file()
     Utils.write_results(prediction_results, 'full-name-output.csv')
