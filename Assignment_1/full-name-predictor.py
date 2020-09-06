@@ -75,19 +75,19 @@ class Predictor:
             wrong = []
 
             for row in reader:
-                predictiction = self.predict_last_name(row[0].upper())
-                predicted_names.append(predictiction)
-                results.append([row[0], predictiction])
+                prediction = self.predict_last_name(row[0].upper())
+                predicted_names.append(prediction)
+                results.append([row[0], prediction])
 
                 # todo: check code remove before submission
                 total += 1
-                if predictiction == row[1]:
+                if prediction == row[1]:
                     correct += 1
 
                 else:
-                    wrong.append([predictiction, row[1]])
+                    wrong.append([prediction, row[1]])
 
-                res.append([predictiction, row[1], predictiction == row[1]])
+                res.append([prediction, row[1], prediction == row[1]])
 
         return results, predicted_names, correct, total, correct/total, res, wrong
 
