@@ -60,10 +60,19 @@ for line in train_data:
         # Word form in second field, lemma in third field
         form = field[1]
         lemma = field[2]
+        if form not in lemma_count:
+            lemma_count[form] = {}
+
+        if lemma not in lemma_count[form]:
+            lemma_count[form][lemma] = 0
+            training_counts['Wordform types'] += 1
+
+        lemma_count[form][lemma] += 1
 
         ######################################################
         ### Insert code for populating the lemma counts    ###
         ######################################################
+        training_counts['Wordform tokens'] += 1
 
 ### Model building and training statistics
         
@@ -71,18 +80,29 @@ for form in lemma_count.keys():
 
         ######################################################
         ### Insert code for building the lookup table      ###
-        ######################################################
+        if len(lemma_max[form].keys()) == 1:
+            training_counts['Unambiguous types'] += 1
+            training_counts['Unambiguous tokens'] += lemma_max[form].values()[0]
+        else:
+            training_counts['Ambiguous types'] += 1
+            training_counts['Ambiguous tokens'] += sum(lemma_max[form].values())
+            training_counts['Ambiguous most common tokens'] += sorted(lemma_max[form].values())[0]
+
+        lemma_max_form = sorted(lemma_count[form].items(), key=lambda x: x[1], reverse=True)[0][0]
+        lemma_max[form] = lemma_max_form
+        if form == lemma_max_form:
+            training_counts['Identity tokens'] += 1
 
         ######################################################
         ### Insert code for populating the training counts ###
         ######################################################
 
-accuracies['Expected lookup'] = ### Calculate expected accuracy if we used lookup on all items ###
+accuracies['Expected lookup'] = (training_counts['Identity tokens'] + training_counts['Ambiguous most common tokens'])/training_counts['Wordform tokens']
 
-accuracies['Expected identity'] = ### Calculate expected accuracy if we used identity mapping on all items ###
+accuracies['Expected identity'] = training_counts['Identity tokens']/training_counts['Wordform tokens']
 
 ### Testing: read test data, and compare lemmatizer output to actual lemma
-    
+
 test_data = open (test_file , 'r')
 
 for line in test_data:
@@ -108,7 +128,7 @@ accuracies['Identity'] = ### Calculate accuracy on the items that used identity 
 accuracies['Overall'] = ### Calculate overall accuracy ###
 
 ### Report training statistics and test results
-                
+
 output = open ('lookup-output.txt' , 'w')
 
 output.write ('Training statistics\n')
