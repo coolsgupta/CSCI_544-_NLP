@@ -102,7 +102,7 @@ accuracies['Expected identity'] = training_counts['Identity tokens']/training_co
 
 ### Testing: read test data, and compare lemmatizer output to actual lemma
 
-test_data = open (test_file , 'r')
+test_data = open (test_file , 'r', encoding='utf-8')
 
 for line in test_data:
 
@@ -119,12 +119,30 @@ for line in test_data:
         ######################################################
         ### Insert code for populating the test counts     ###
         ######################################################
+        test_counts['Total test items'] += 1
+        look_up_lemma = lemma_max.get(form, -1)
+        if look_up_lemma != -1:
+            test_counts['Found in lookup table'] += 1
+            if look_up_lemma == lemma:
+                test_counts['Lookup match'] += 1
 
-accuracies['Lookup'] = ### Calculate accuracy on the items that used the lookup table ###
+            else:
+                test_counts['Lookup mismatch'] += 1
 
-accuracies['Identity'] = ### Calculate accuracy on the items that used identity mapping ###
+        else:
+            test_counts['Not found in lookup table'] += 1
+            look_up_lemma = form
+            if lemma == look_up_lemma:
+                test_counts['Identity match'] += 1
+            else:
+                test_counts['Identity mismatch'] += 1
 
-accuracies['Overall'] = ### Calculate overall accuracy ###
+
+accuracies['Lookup'] = test_counts['Lookup match']/(test_counts['Lookup match'] + test_counts['Lookup mismatch'])
+
+accuracies['Identity'] = test_counts['Identity match']/(test_counts['Identity match'] + test_counts['Identity mismatch'])
+
+accuracies['Overall'] = (test_counts['Lookup match'] + test_counts['Identity match'])/test_counts['Total test items']
 
 ### Report training statistics and test results
 
