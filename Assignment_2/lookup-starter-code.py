@@ -47,7 +47,7 @@ accuracies = {}
 
 ### Training: read training data and populate lemma counters
 
-train_data = open (train_file , 'r')
+train_data = open (train_file , 'r', encoding='utf-8')
 
 for line in train_data:
     
@@ -62,10 +62,10 @@ for line in train_data:
         lemma = field[2]
         if form not in lemma_count:
             lemma_count[form] = {}
+            training_counts['Wordform types'] += 1
 
         if lemma not in lemma_count[form]:
             lemma_count[form][lemma] = 0
-            training_counts['Wordform types'] += 1
 
         lemma_count[form][lemma] += 1
 
@@ -80,24 +80,23 @@ for form in lemma_count.keys():
 
         ######################################################
         ### Insert code for building the lookup table      ###
-        if len(lemma_max[form].keys()) == 1:
+        if len(lemma_count[form].keys()) == 1:
             training_counts['Unambiguous types'] += 1
-            training_counts['Unambiguous tokens'] += lemma_max[form].values()[0]
+            training_counts['Unambiguous tokens'] += list(lemma_count[form].values())[0]
         else:
             training_counts['Ambiguous types'] += 1
-            training_counts['Ambiguous tokens'] += sum(lemma_max[form].values())
-            training_counts['Ambiguous most common tokens'] += sorted(lemma_max[form].values())[0]
+            training_counts['Ambiguous tokens'] += sum(lemma_count[form].values())
+            training_counts['Ambiguous most common tokens'] += sorted(lemma_count[form].values(), reverse=True)[0]
 
         lemma_max_form = sorted(lemma_count[form].items(), key=lambda x: x[1], reverse=True)[0][0]
         lemma_max[form] = lemma_max_form
-        if form == lemma_max_form:
-            training_counts['Identity tokens'] += 1
+        training_counts['Identity tokens'] += lemma_count[form].get(form, 0)
 
         ######################################################
         ### Insert code for populating the training counts ###
         ######################################################
 
-accuracies['Expected lookup'] = (training_counts['Identity tokens'] + training_counts['Ambiguous most common tokens'])/training_counts['Wordform tokens']
+accuracies['Expected lookup'] = 1 - (training_counts['Ambiguous tokens'] - training_counts['Ambiguous most common tokens'])/training_counts['Wordform tokens']
 
 accuracies['Expected identity'] = training_counts['Identity tokens']/training_counts['Wordform tokens']
 
