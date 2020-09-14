@@ -60,19 +60,20 @@ for line in train_data:
         # Word form in second field, lemma in third field
         form = field[1]
         lemma = field[2]
+
+        training_counts['Wordform tokens'] += 1
         if form not in lemma_count:
             lemma_count[form] = {}
             training_counts['Wordform types'] += 1
+
+        ######################################################
+        ### Insert code for populating the lemma counts    ###
+        ######################################################
 
         if lemma not in lemma_count[form]:
             lemma_count[form][lemma] = 0
 
         lemma_count[form][lemma] += 1
-
-        ######################################################
-        ### Insert code for populating the lemma counts    ###
-        ######################################################
-        training_counts['Wordform tokens'] += 1
 
 ### Model building and training statistics
         
@@ -80,21 +81,22 @@ for form in lemma_count.keys():
 
         ######################################################
         ### Insert code for building the lookup table      ###
+        lemma_max[form] = sorted(lemma_count[form].items(), key=lambda x: x[1], reverse=True)[0][0]
+
+        ######################################################
+        ### Insert code for populating the training counts ###
+        ######################################################
         if len(lemma_count[form].keys()) == 1:
             training_counts['Unambiguous types'] += 1
-            training_counts['Unambiguous tokens'] += list(lemma_count[form].values())[0]
+            training_counts['Unambiguous tokens'] += sum(lemma_count[form].values())
+
         else:
             training_counts['Ambiguous types'] += 1
             training_counts['Ambiguous tokens'] += sum(lemma_count[form].values())
             training_counts['Ambiguous most common tokens'] += sorted(lemma_count[form].values(), reverse=True)[0]
 
-        lemma_max_form = sorted(lemma_count[form].items(), key=lambda x: x[1], reverse=True)[0][0]
-        lemma_max[form] = lemma_max_form
         training_counts['Identity tokens'] += lemma_count[form].get(form, 0)
 
-        ######################################################
-        ### Insert code for populating the training counts ###
-        ######################################################
 
 accuracies['Expected lookup'] = 1 - (training_counts['Ambiguous tokens'] - training_counts['Ambiguous most common tokens'])/training_counts['Wordform tokens']
 
@@ -138,9 +140,9 @@ for line in test_data:
                 test_counts['Identity mismatch'] += 1
 
 
-accuracies['Lookup'] = test_counts['Lookup match']/(test_counts['Lookup match'] + test_counts['Lookup mismatch'])
+accuracies['Lookup'] = test_counts['Lookup match']/test_counts['Found in lookup table']
 
-accuracies['Identity'] = test_counts['Identity match']/(test_counts['Identity match'] + test_counts['Identity mismatch'])
+accuracies['Identity'] = test_counts['Identity match']/test_counts['Not found in lookup table']
 
 accuracies['Overall'] = (test_counts['Lookup match'] + test_counts['Identity match'])/test_counts['Total test items']
 
