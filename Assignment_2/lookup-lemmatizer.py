@@ -99,9 +99,7 @@ for form in lemma_count.keys():
 
     training_counts['Identity tokens'] += lemma_count[form].get(form, 0)
 
-accuracies['Expected lookup'] = 1 - (
-            training_counts['Ambiguous tokens'] - training_counts['Ambiguous most common tokens']) / training_counts[
-                                    'Wordform tokens']
+accuracies['Expected lookup'] = 1 - (training_counts['Ambiguous tokens'] - training_counts['Ambiguous most common tokens']) / training_counts['Wordform tokens']
 
 accuracies['Expected identity'] = training_counts['Identity tokens'] / training_counts['Wordform tokens']
 
