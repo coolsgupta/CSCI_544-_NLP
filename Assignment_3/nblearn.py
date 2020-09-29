@@ -11,7 +11,7 @@ class NaiveBayesClassifier:
         self.train_data_classified = {"0": {}, "1": {}, "2": {}, "3": {}}
         self.class_frequency = dict.fromkeys(self.class_labels, 0)
         self.train_data_path = train_data_path
-        self.flag = 1
+        # self.flag = 1
         self.stop_words = self.get_stopwords()
 
     def get_stopwords(self):
@@ -26,9 +26,9 @@ class NaiveBayesClassifier:
 
         text_tokens = custom_strip_text.split(' ')
         cleaned_train_input = []
-        for each in text_tokens:
-            if each not in self.stop_words:
-                cleaned_train_input.append(each)
+        for word in text_tokens:
+            if word not in self.stop_words:
+                cleaned_train_input.append(word)
 
         return cleaned_train_input
 
@@ -66,9 +66,7 @@ class NaiveBayesClassifier:
         for (dir_path, dir_names, file_names) in walk(next(os.walk(self.train_data_path))[0]):
             for train_file in file_names:
                 file_name = os.path.join(dir_path, train_file)
-                # todo: remove below line and put re.search as re.search('.txt')
-                search_str = 'fold2|fold3|fold4' if self.flag == 1 else '.txt'
-                if bool(re.search(search_str, file_name)):
+                if bool(re.search('.txt', file_name)):
                     self.update_train_data_class(file_name)
 
     def train_model(self):

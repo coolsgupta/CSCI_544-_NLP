@@ -14,7 +14,7 @@ class NaiveBayesPrdictor:
         self.model = self.load_model()
         self.class_labels = ["0", "1", "2", "3"]
         self.stop_words = self.get_stopwords()
-        self.flag = 1
+        # self.flag = 1
 
     def get_class(self, class_label):
         if class_label == "0":
@@ -40,9 +40,9 @@ class NaiveBayesPrdictor:
 
         text_tokens = custom_strip_text.split(' ')
         cleaned_train_input = []
-        for each in text_tokens:
-            if each not in self.stop_words:
-                cleaned_train_input.append(each)
+        for word in text_tokens:
+            if word not in self.stop_words:
+                cleaned_train_input.append(word)
 
         return cleaned_train_input
 
@@ -52,34 +52,32 @@ class NaiveBayesPrdictor:
             return model_params
 
     def predict(self, file_name):
-        word_arr = self.clean_input_case_text(file_name)
-        probability_of_each_class = self.model['class_probability']
+        text_tokens = self.clean_input_case_text(file_name)
+        class_prob = self.model['class_probability']
         prior_prob = self.model['score']
 
         # calculate probability of each word
-        total_pro_of_sentence_in_a_class = dict.fromkeys(self.class_labels, 0)
+        text_segment_total_prob = dict.fromkeys(self.class_labels, 0)
 
-        for word in word_arr:
-            for key in self.class_labels:
-                if word in prior_prob[key]:
-                    total_pro_of_sentence_in_a_class[key] += prior_prob[key][word]
+        for word in text_tokens:
+            for data_class in self.class_labels:
+                if word in prior_prob[data_class]:
+                    text_segment_total_prob[data_class] += prior_prob[data_class][word]
 
         # posterior Probability
         posterior_probability = {}
-        for key in total_pro_of_sentence_in_a_class.keys():
-            posterior_probability[key] = total_pro_of_sentence_in_a_class[key] + math.log(
-                probability_of_each_class[key])
+        for data_class in text_segment_total_prob.keys():
+            posterior_probability[data_class] = text_segment_total_prob[data_class] + math.log(
+                class_prob[data_class])
 
         return max(posterior_probability.items(), key=operator.itemgetter(1))[0]
 
     def classify(self):
         output = ''
         for (dir_path, dir_names, file_names) in walk(next(os.walk(self.test_data_path))[0]):
-            for f in file_names:
-                file_name = os.path.join(dir_path, f)
-                # todo: remove below line and put re.search as re.search('.txt')
-                search_str = 'fold1' if self.flag == 1 else '.txt'
-                if bool(re.search(search_str, file_name)):
+            for test_case in file_names:
+                file_name = os.path.join(dir_path, test_case)
+                if bool(re.search('.txt', file_name)):
                     predicted_class = self.get_class(self.predict(file_name))
                     predicted_class = predicted_class + " " + file_name + '\n'
                     output += predicted_class
