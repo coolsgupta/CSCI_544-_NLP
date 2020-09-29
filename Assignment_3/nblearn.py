@@ -8,8 +8,8 @@ from utils import *
 class NaiveBayesClassifier:
     def __init__(self, train_data_path):
         self.class_labels = ["0", "1", "2", "3"]
-        self.total_unique_words = set()
-        self.train_data = dict.fromkeys(self.class_labels, {})
+        self.all_text_words = set()
+        self.train_data_classified = {"0": {}, "1": {}, "2": {}, "3": {}}
         self.class_frequency = dict.fromkeys(self.class_labels, 0)
         self.train_data_path = train_data_path
         self.flag = 1
@@ -65,11 +65,11 @@ class NaiveBayesClassifier:
         self.class_frequency[train_class_label] += 1
 
         for each in text_tokens:
-            self.total_unique_words.add(each)
-            if each in self.train_data[train_class_label]:
-                self.train_data[train_class_label][each] += 1
+            self.all_text_words.add(each)
+            if each in self.train_data_classified[train_class_label]:
+                self.train_data_classified[train_class_label][each] += 1
             else:
-                self.train_data[train_class_label][each] = 1
+                self.train_data_classified[train_class_label][each] = 1
 
 
     def create_train_data(self):
@@ -82,26 +82,34 @@ class NaiveBayesClassifier:
                     self.update_train_data_class(file_name)
 
     def train_model(self):
-        self.create_train_data()
-        total_no_of_reviews = sum(self.class_frequency.values())
-        probability_of_each_class = {}
-        for each in self.class_frequency.keys():
-            probability_of_each_class[each] = self.class_frequency[each] / total_no_of_reviews
+        for (dir_path, dir_names, file_names) in walk(next(os.walk(self.train_data_path))[0]):
+            for f in file_names:
+                file_name = os.path.join(dir_path, f)
+                # todo: remove below line and put re.search as re.search('.txt')
+                search_str = 'fold2|fold3|fold4' if self.flag == 1 else '.txt'
+                if bool(re.search(search_str, file_name)):
+                    self.update_train_data_class(file_name)
 
-        mod_v = len(self.total_unique_words)
-        train_data_keys = self.class_labels
+        num_train_cases = sum(self.class_frequency.values())
+        class_probability_map = {}
+        for data_class in self.class_frequency.keys():
+            class_probability_map[data_class] = self.class_frequency[data_class] / num_train_cases
+
+        len_train_words_set = len(self.all_text_words)
         train_data_keys_count = {}
-        for key in train_data_keys:
-            train_data_keys_count[key] = sum(self.train_data[key].values())
+        for key in util_labels:
+            train_data_keys_count[key] = sum(self.train_data_classified[key].values())
 
-        probability_score = dict.fromkeys(self.class_labels, {})
-        for word in self.total_unique_words:
-            for key in self.train_data:
-                count_of_word_class = (self.train_data[key][word] + 1) if word in self.train_data[key] else 1
-                proba_of_word_in_a_class = count_of_word_class / (train_data_keys_count[key] + mod_v + 1)
-                probability_score[key][word] = math.log(proba_of_word_in_a_class)
+        class_prob_score = get_custom_label('b')
+        for word in self.all_text_words:
+            for key in self.train_data_classified:
+                count_of_word_class = (self.train_data_classified[key][word] + 1) if word in self.train_data_classified[
+                    key] else 1
+                word_relative_freq_in_class = count_of_word_class / (
+                            train_data_keys_count[key] + len_train_words_set + 1)
+                class_prob_score[key][word] = math.log(word_relative_freq_in_class)
 
-        result = {"class_probability": probability_of_each_class, 'score': probability_score}
+        result = {"class_probability": class_probability_map, 'score': class_prob_score}
         with open('nbmodel.txt', 'w') as file:
             file.write(str(result).replace("'", "\""))
             file.close()
