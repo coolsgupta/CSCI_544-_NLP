@@ -7,7 +7,7 @@ import os
 import re
 
 
-class NaiveBayesPrdictor:
+class PerceptronPredictor:
     def __init__(self, test_data_path):
         self.test_data_path = test_data_path
         self.model_file_name = 'nbmodel.txt'
@@ -88,4 +88,4 @@ class NaiveBayesPrdictor:
 
 
 if __name__ == '__main__':
-    NaiveBayesPrdictor(sys.argv[1]).classify()
+    PerceptronPredictor(sys.argv[1]).classify()

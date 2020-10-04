@@ -4,7 +4,8 @@ import sys
 import os
 import math
 
-class NaiveBayesClassifier:
+
+class PerceptronClassifier:
     def __init__(self, train_data_path):
         self.class_labels = ["0", "1", "2", "3"]
         self.all_text_words = set()
@@ -96,4 +97,4 @@ class NaiveBayesClassifier:
 
 
 if __name__ == '__main__':
-    NaiveBayesClassifier(sys.argv[1]).train_model()
+    PerceptronClassifier(sys.argv[1]).train_model()
