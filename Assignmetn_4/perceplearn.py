@@ -34,7 +34,7 @@ class Utils:
 
 
 class PerceptronClassifier:
-    def __init__(self, train_data_path, epochs, num_dimensions, use_averaged_perceptron = False):
+    def __init__(self, train_data_path, epochs, num_dimensions, use_averaged_perceptron=False):
         self.class_labels = Utils.CLASS_TUPLES
         self.all_word_freq_map = {}
         # self.train_data_classified = Utils.get_class_word_map_dict()
@@ -45,7 +45,7 @@ class PerceptronClassifier:
         self.train_data_label_truthful_deceptive = []
         self.selected_feature_indices_map = {}
         self.selected_features = []
-        self.train_data_vectors_with_labels = []
+        self.train_data_vectors = []
         # self.flag = 1
         self.stop_words = self.get_stopwords()
         self.epochs = epochs
@@ -91,7 +91,7 @@ class PerceptronClassifier:
     def create_train_data_vectors(self):
         for sample in self.train_data_tokenized:
             data_vector = [sample.get(word, 0) for word in self.selected_features]
-            self.train_data_vectors_with_labels.append(np.asarray(data_vector))
+            self.train_data_vectors.append(np.asarray(data_vector))
 
     def update_train_data_class(self, file_name):
 
@@ -111,7 +111,6 @@ class PerceptronClassifier:
         self.train_data_label_positive_negative.append(train_class_label[Utils.POSITIVE_NEGATIVE_TUPLE_INDEX])
         self.train_data_label_truthful_deceptive.append(train_class_label[Utils.POSITIVE_NEGATIVE_TUPLE_INDEX])
 
-
     def create_train_data(self):
         for (dir_path, dir_names, file_names) in walk(next(os.walk(self.train_data_path))[0]):
             for train_file in file_names:
@@ -125,35 +124,15 @@ class PerceptronClassifier:
                         logging.error(traceback.format_exc())
 
         selected_features = sorted(self.all_word_freq_map.items(), key=lambda x: x[1], reverse=True)[:self.num_dimensions]
-        self.selected_feature_indices_map = {i: x[0] for i, x in enumerate(selected_features)}
         self.selected_features = tuple([x[0] for x in selected_features])
+        self.selected_feature_indices_map = {i: x for i, x in enumerate(self.selected_features)}
         self.create_train_data_vectors()
 
     def train_model(self):
-        return
-        # num_train_cases = sum(self.class_frequency.values())
-        # class_probability_map = {}
-        #
-        # for data_class in self.class_frequency.keys():
-        #     class_probability_map[data_class] = self.class_frequency[data_class] / num_train_cases
-        #
-        # len_train_words_set = len(self.all_text_words)
-        # train_data_keys_count = {}
-        # for data_class in self.class_labels:
-        #     train_data_keys_count[data_class] = sum(self.train_data_classified[data_class].values())
-        #
-        # class_prob_score = {"0": {}, "1": {}, "2": {}, "3": {}}
-        # for word in self.all_text_words:
-        #     for data_class in self.train_data_classified:
-        #         count_of_word_class = (self.train_data_classified[data_class][word] + 1) if word in self.train_data_classified[data_class] else 1
-        #         word_relative_freq_in_class = count_of_word_class / (train_data_keys_count[data_class] + len_train_words_set + 1)
-        #         class_prob_score[data_class][word] = math.log(word_relative_freq_in_class)
-        #
-        # result = {"class_probability": class_probability_map, 'score': class_prob_score}
-        # with open('nbmodel.txt', 'w') as file:
-        #     file.write(str(result).replace("'", "\""))
-        #     file.close()
+        # training perceptron to classify sample as Positive or Negative
 
+        # training perceptron to classify sample as Truthful or Deceptive
+        return
 
 if __name__ == '__main__':
     PerceptronClassifier(sys.argv[1], 500, 1000).train_model()
