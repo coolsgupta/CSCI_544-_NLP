@@ -1,25 +1,24 @@
 import sys
 import json
 
-output_file="hmmoutput.txt"
-model_file="hmmmodel.txt"
+results_file= "hmmoutput.txt"
+hmm_model_file= "hmmmodel.txt"
 
-model_dict = open('hmmmodel.txt', 'r', encoding='UTF-8')
-model = json.loads(model_dict.read())
-model_dict.close()
+model_json = open('hmmmodel.txt', 'r', encoding='UTF-8')
+hmm_model = json.loads(model_json.read())
+model_json.close()
 
-transition_prob = model['transition']
-emission_prob = model['emission']
-tag_counts = model['tags']
-most_prob_word_tag = model['most_tag_word']
+transition_probabilities = hmm_model['transition']
+emission_probabilities = hmm_model['emission']
+tag_frequency_map = hmm_model['tags']
+most_common_tags = hmm_model['most_tag_word']
 
-dev_data = sys.argv[1]
+development_data_path = sys.argv[1]
 
-f = open(dev_data, 'r', encoding='UTF-8')
-allLines = f.read()
-sentenceList = allLines.splitlines()
-#print(sentenceList)
-taggedS = []
+development_data_file = open(development_data_path, 'r', encoding='UTF-8')
+development_data = development_data_file.read().splitlines()
+
+results = []
 
 def SentenceTagging(Vmodel, wordList):
     curState = len(wordList)
@@ -33,28 +32,28 @@ def SentenceTagging(Vmodel, wordList):
         i-=1
     return res
 
-for sentence in sentenceList:
+for sentence in development_data:
     wordList = sentence.split()
     firstWord = wordList[0]
     Vmodel = []
     Vmodel.append({})
     
     States = {}
-    if firstWord in emission_prob.keys():
-        States = emission_prob[firstWord]
+    if firstWord in emission_probabilities.keys():
+        States = emission_probabilities[firstWord]
     else:
-        States = most_prob_word_tag
+        States = most_common_tags
     for tag in States:
         if tag == 'start' or tag=='end':
             continue
-        elif firstWord in emission_prob:
-            e_values = emission_prob[firstWord][tag]
+        elif firstWord in emission_probabilities:
+            e_values = emission_probabilities[firstWord][tag]
         #elif tag in most_prob_tags:
         #    e_values = most_prob_tags[tag]/sum(most_prob_tags.values())
         else:
             e_values = 1  #tag_counts[tag]/sum(tag_counts.values())
         Vmodel[0][tag] = {}
-        Vmodel[0][tag]['prob'] = e_values * transition_prob[tag]['start']
+        Vmodel[0][tag]['prob'] = e_values * transition_probabilities[tag]['start']
         Vmodel[0][tag]['bp'] = 'start'
         
     for i in range(1,len(wordList)+1):
@@ -68,7 +67,7 @@ for sentence in sentenceList:
                 if tag=='end':
                     continue
                 else:
-                    prevProb = Vmodel[-2][tag]['prob'] * transition_prob['end'][tag]
+                    prevProb = Vmodel[-2][tag]['prob'] * transition_probabilities['end'][tag]
 
                     if (prevProb>maxProb['prob']):
                         maxProb['prob'] = prevProb
@@ -80,15 +79,15 @@ for sentence in sentenceList:
         else:    
             currentWord = wordList[i]
             Vmodel.append({})
-            if currentWord in emission_prob:
-                States = emission_prob[currentWord]
+            if currentWord in emission_probabilities:
+                States = emission_probabilities[currentWord]
             else:
-                States = most_prob_word_tag
+                States = most_common_tags
             for tag in States:
                 if tag=='start' or tag=='end':
                     continue
-                elif currentWord in emission_prob:
-                    e_values = emission_prob[currentWord][tag]
+                elif currentWord in emission_probabilities:
+                    e_values = emission_probabilities[currentWord][tag]
                 #elif tag in most_prob_tags:
                 #    e_values = most_prob_tags[tag]/sum(most_prob_tags.values())
                 else:
@@ -98,7 +97,7 @@ for sentence in sentenceList:
                     if lastTag=='start' or lastTag=='end':
                         continue
                     else:
-                        prevProb = Vmodel[i-1][lastTag]['prob'] * e_values * transition_prob[tag][lastTag]
+                        prevProb = Vmodel[i-1][lastTag]['prob'] * e_values * transition_probabilities[tag][lastTag]
 
                         if(prevProb>maxProb['prob']):
                             maxProb['prob'] = prevProb
@@ -108,8 +107,8 @@ for sentence in sentenceList:
                 Vmodel[i][tag]['prob'] = maxProb['prob']
                 Vmodel[i][tag]['bp'] = maxProb['bp']
     #this will append the tags sentence by sentence
-    taggedS.append(SentenceTagging(Vmodel, wordList))
+    results.append(SentenceTagging(Vmodel, wordList))
                 
 fwrite = open('hmmoutput.txt', 'w', encoding = 'UTF-8')
-for s in taggedS:
+for s in results:
     fwrite.write(s+'\n')

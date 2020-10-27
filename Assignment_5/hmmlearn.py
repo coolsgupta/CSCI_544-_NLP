@@ -11,10 +11,10 @@ class HMM:
         self.tag_frequency_map = {'start': len(self.train_data), 'end': len(self.train_data)}
         self.word_tag_map = {}
         self.word_max_freq_tag_map = {}
-        self.required_tags = []
-        self.emission_prob = {}
+        self.most_common_tags = []
+        self.emission_probabilities = {}
         self.previous_tags = {}
-        self.transition_prob = {}
+        self.transition_probabilities = {}
         self.model = {}
 
     def create_train_data(self):
@@ -55,16 +55,16 @@ class HMM:
             key=lambda k: len(self.word_max_freq_tag_map[k]),
             reverse=True
         )
-        self.required_tags = self.word_max_freq_tag_map[0:5]
+        self.most_common_tags = self.word_max_freq_tag_map[0:5]
 
     def get_emission_probability(self):
         for tag in self.word_tag_map:
             for word in self.word_tag_map[tag]:
-                if word not in self.emission_prob:
-                    self.emission_prob[word] = {}
+                if word not in self.emission_probabilities:
+                    self.emission_probabilities[word] = {}
 
-                if tag not in self.emission_prob[word]:
-                    self.emission_prob[word][tag] = self.word_tag_map[tag][word] / self.tag_frequency_map[tag]
+                if tag not in self.emission_probabilities[word]:
+                    self.emission_probabilities[word][tag] = self.word_tag_map[tag][word] / self.tag_frequency_map[tag]
 
     def get_previous_tags(self):
         for tags in self.tag_frequency_map:
@@ -94,26 +94,26 @@ class HMM:
                         self.previous_tags[line[i].split('/')[-1]][line[i - 1].split('/')[-1]] += 1
 
     def get_transition_probabilities(self):
-        self.transition_prob = deepcopy(self.previous_tags)
-        for cur_tag in self.transition_prob:
+        self.transition_probabilities = deepcopy(self.previous_tags)
+        for cur_tag in self.transition_probabilities:
             for prev_tag in self.tag_frequency_map:
                 if prev_tag == 'end':
                     continue
 
                 # adding add one smoothing
-                elif prev_tag not in self.transition_prob[cur_tag]:
-                    self.transition_prob[cur_tag][prev_tag] = 1 / (
+                elif prev_tag not in self.transition_probabilities[cur_tag]:
+                    self.transition_probabilities[cur_tag][prev_tag] = 1 / (
                                 self.tag_frequency_map[prev_tag] + (4 * len(self.tag_frequency_map)) - 1)
                 else:
-                    self.transition_prob[cur_tag][prev_tag] = (self.transition_prob[cur_tag][prev_tag] + 1) / (
+                    self.transition_probabilities[cur_tag][prev_tag] = (self.transition_probabilities[cur_tag][prev_tag] + 1) / (
                                 self.tag_frequency_map[prev_tag] + (4 * len(self.tag_frequency_map)) - 1)
 
     def write_model(self):
         self.model = {
             'tags': self.tag_frequency_map,
-            'transition': self.transition_prob,
-            'emission': self.emission_prob,
-            'most_tag_word': self.required_tags
+            'transition': self.transition_probabilities,
+            'emission': self.emission_probabilities,
+            'most_tag_word': self.most_common_tags
         }
 
         with open(self.training_model_file, 'w') as model_file:
