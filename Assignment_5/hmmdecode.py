@@ -22,18 +22,16 @@ class HMMDecode:
         development_data_file = open(development_data_path, 'r', encoding='UTF-8')
         return development_data_file.read().splitlines()
 
-    def SentenceTagging(self, Vmodel, wordList):
-        curState = len(wordList)
-        curTag = 'end'
-        res = ""
-        i = len(wordList)-1
-        while i>=0:
-            res = wordList[i]+"/"+Vmodel[curState][curTag]['bp']+" " + res
-            curTag = Vmodel[curState][curTag]['bp']
-            curState = curState-1
-            i-=1
+    def SentenceTagging(self, current_model, words):
+        current_words_len = len(words)
+        current_tag = 'end'
+        result = ""
+        for i in range(current_words_len - 1, -1, -1):
+            result = words[i] + "/" + current_model[current_words_len][current_tag]['bp'] + " " + result
+            current_tag = current_model[current_words_len][current_tag]['bp']
+            current_words_len = current_words_len-1
 
-        return res
+        return result
 
     def write_results(self):
         fwrite = open(self.results_file, 'w', encoding='UTF-8')
