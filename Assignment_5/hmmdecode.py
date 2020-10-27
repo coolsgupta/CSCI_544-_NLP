@@ -1,6 +1,5 @@
 import sys
 import json
-import os
 
 output_file="hmmoutput.txt"
 model_file="hmmmodel.txt"
