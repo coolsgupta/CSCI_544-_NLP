@@ -7,10 +7,10 @@ class HMMDecode:
         self.results_file = "hmmoutput.txt"
         self.hmm_model_file = "hmmmodel.txt"
         self.hmm_model = self.get_model()
-        self.transition_probabilities = self.hmm_model['transition']
-        self.emission_probabilities = self.hmm_model['emission']
-        self.tag_frequency_map = self.hmm_model['tags']
-        self.most_common_tags = self.hmm_model['most_tag_word']
+        self.tag_frequency_map = self.hmm_model['tag_frequency_map']
+        self.transition_probabilities = self.hmm_model['transition_probabilities']
+        self.emission_probabilities = self.hmm_model['emission_probabilities']
+        self.most_common_tags = self.hmm_model['most_common_tags']
         self.development_data = self.get_development_data(argv[1])
         self.results = []
 
@@ -22,7 +22,7 @@ class HMMDecode:
         development_data_file = open(development_data_path, 'r', encoding='UTF-8')
         return development_data_file.read().splitlines()
 
-    def SentenceTagging(self, current_model, words):
+    def generate_sentence_tag(self, current_model, words):
         current_words_len = len(words)
         current_tag = 'end'
         result = ""
@@ -36,96 +36,94 @@ class HMMDecode:
     def write_results(self):
         fwrite = open(self.results_file, 'w', encoding='UTF-8')
         fwrite.write('\n'.join(self.results))
-        # for s in results:
-        #     fwrite.write(s + '\n')
 
     def get_results(self):
         for sentence in self.development_data:
-            wordList = sentence.split()
-            firstWord = wordList[0]
-            Vmodel = []
-            Vmodel.append({})
+            words = sentence.split()
+            current_model = [{}]
 
-            States = {}
-            if firstWord in self.emission_probabilities.keys():
-                States = self.emission_probabilities[firstWord]
+            if words[0] in self.emission_probabilities.keys():
+                states = self.emission_probabilities[words[0]]
 
             else:
-                States = self.most_common_tags
+                states = self.most_common_tags
 
-            for tag in States:
-                if tag == 'start' or tag=='end':
+            for tag in states:
+                if tag == 'start' or tag == 'end':
                     continue
 
-                elif firstWord in self.emission_probabilities:
-                    e_values = self.emission_probabilities[firstWord][tag]
+                elif words[0] in self.emission_probabilities:
+                    emission_probability = self.emission_probabilities[words[0]][tag]
 
                 else:
-                    e_values = 1  #tag_counts[tag]/sum(tag_counts.values())
+                    emission_probability = 1
 
-                Vmodel[0][tag] = {}
-                Vmodel[0][tag]['prob'] = e_values * self.transition_probabilities[tag]['start']
-                Vmodel[0][tag]['bp'] = 'start'
+                current_model[0][tag] = {}
+                current_model[0][tag]['prob'] = emission_probability * self.transition_probabilities[tag]['start']
+                current_model[0][tag]['bp'] = 'start'
 
-            for i in range(1,len(wordList)+1):
-                #handling the last step for the end state
-                if i==len(wordList):
-                    lastword = Vmodel[-1]
-                    States = lastword.keys()
-                    maxProb ={'prob':0,'bp':''}
-                    Vmodel.append({})
+            for i in range(1, len(words) + 1):
+                if i == len(words):
+                    states = current_model[-1].keys()
+                    max_probability = {
+                        'prob': 0,
+                        'bp': ''
+                    }
+                    current_model.append({})
 
-                    for tag in States:
-                        if tag=='end':
+                    for tag in states:
+                        if tag == 'end':
                             continue
 
                         else:
-                            prevProb = Vmodel[-2][tag]['prob'] * self.transition_probabilities['end'][tag]
+                            previous_probability = current_model[-2][tag]['prob'] * self.transition_probabilities['end'][tag]
 
-                            if (prevProb>maxProb['prob']):
-                                maxProb['prob'] = prevProb
-                                maxProb['bp'] = tag
+                            if previous_probability > max_probability['prob']:
+                                max_probability['prob'] = previous_probability
+                                max_probability['bp'] = tag
 
-                    Vmodel[-1]['end'] = {}
-                    Vmodel[-1]['end']['prob'] = maxProb['prob']
-                    Vmodel[-1]['end']['bp'] = maxProb['bp']
+                    current_model[-1]['end'] = {}
+                    current_model[-1]['end']['prob'] = max_probability['prob']
+                    current_model[-1]['end']['bp'] = max_probability['bp']
 
                 else:
-                    currentWord = wordList[i]
-                    Vmodel.append({})
-                    if currentWord in self.emission_probabilities:
-                        States = self.emission_probabilities[currentWord]
+                    current_word = words[i]
+                    current_model.append({})
+                    if current_word in self.emission_probabilities:
+                        states = self.emission_probabilities[current_word]
 
                     else:
-                        States = self.most_common_tags
+                        states = self.most_common_tags
 
-                    for tag in States:
-                        if tag=='start' or tag=='end':
+                    for tag in states:
+                        if tag == 'start' or tag == 'end':
                             continue
 
-                        elif currentWord in self.emission_probabilities:
-                            e_values = self.emission_probabilities[currentWord][tag]
+                        if current_word in self.emission_probabilities:
+                            emission_probability = self.emission_probabilities[current_word][tag]
 
                         else:
-                            e_values = 1
+                            emission_probability = 1
 
-                        maxProb ={'prob':0,'bp':''}
-                        for lastTag in Vmodel[i-1]:
-                            if lastTag=='start' or lastTag=='end':
+                        max_probability = {
+                            'prob': 0,
+                            'bp': ''
+                        }
+                        for lastTag in current_model[i-1]:
+                            if lastTag == 'start' or lastTag == 'end':
                                 continue
                             else:
-                                prevProb = Vmodel[i-1][lastTag]['prob'] * e_values * self.transition_probabilities[tag][lastTag]
+                                previous_probability = current_model[i-1][lastTag]['prob'] * emission_probability * self.transition_probabilities[tag][lastTag]
 
-                                if(prevProb>maxProb['prob']):
-                                    maxProb['prob'] = prevProb
-                                    maxProb['bp'] = lastTag
+                                if previous_probability > max_probability['prob']:
+                                    max_probability['prob'] = previous_probability
+                                    max_probability['bp'] = lastTag
 
-                        Vmodel[i][tag] = {}
-                        Vmodel[i][tag]['prob'] = maxProb['prob']
-                        Vmodel[i][tag]['bp'] = maxProb['bp']
+                        current_model[i][tag] = {}
+                        current_model[i][tag]['prob'] = max_probability['prob']
+                        current_model[i][tag]['bp'] = max_probability['bp']
 
-            # this will append the tags sentence by sentence
-            self.results.append(self.SentenceTagging(Vmodel, wordList))
+            self.results.append(self.generate_sentence_tag(current_model, words))
             self.write_results()
 
 
