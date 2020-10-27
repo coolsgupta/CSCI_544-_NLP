@@ -37,7 +37,11 @@ class HMMDecode:
         fwrite = open(self.results_file, 'w', encoding='UTF-8')
         fwrite.write('\n'.join(self.results))
 
+    def initialize_probability_map(self):
+        return {'prob': 0, 'bp': ''}
+
     def get_current_model_max_probability(self, states, current_word, index, current_model):
+        current_model.append({})
         for tag in states:
             if tag == 'start' or tag == 'end':
                 continue
@@ -48,10 +52,7 @@ class HMMDecode:
             else:
                 emission_probability = 1
 
-            max_probability = {
-                'prob': 0,
-                'bp': ''
-            }
+            max_probability = self.initialize_probability_map()
             for lastTag in current_model[index - 1]:
                 if lastTag == 'start' or lastTag == 'end':
                     continue
@@ -87,7 +88,8 @@ class HMMDecode:
         current_model[-1]['end']['bp'] = max_probability['bp']
         return current_model
 
-    def get_current_model_tag_probability(self, states, words, current_model):
+    def get_current_model_tag_probability(self, states, words):
+        current_model = [{}]
         for tag in states:
             if tag == 'start' or tag == 'end':
                 continue
@@ -107,7 +109,6 @@ class HMMDecode:
     def get_results(self):
         for sentence in self.development_data:
             words = sentence.split()
-            current_model = [{}]
 
             if words[0] in self.emission_probabilities.keys():
                 states = self.emission_probabilities[words[0]]
@@ -115,20 +116,16 @@ class HMMDecode:
             else:
                 states = self.most_common_tags
 
-            current_model = self.get_current_model_tag_probability(states, words, current_model)
+            current_model = self.get_current_model_tag_probability(states, words)
 
             for i in range(1, len(words) + 1):
                 if i == len(words):
                     states = current_model[-1].keys()
-                    max_probability = {
-                        'prob': 0,
-                        'bp': ''
-                    }
+                    max_probability = self.initialize_probability_map()
                     current_model = self.get_current_model_end_probability(states, max_probability, current_model)
 
                 else:
                     current_word = words[i]
-                    current_model.append({})
                     if current_word in self.emission_probabilities:
                         states = self.emission_probabilities[current_word]
 
