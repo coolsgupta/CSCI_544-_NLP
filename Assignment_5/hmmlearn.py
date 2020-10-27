@@ -65,6 +65,18 @@ class HMM:
                 if tag not in self.emission_probabilities[word]:
                     self.emission_probabilities[word][tag] = self.word_tag_map[tag][word] / self.tag_frequency_map[tag]
 
+    def calculate_transition_probabilities(self):
+        for cur_tag in self.transition_probabilities:
+            for prev_tag in self.tag_frequency_map:
+                if prev_tag == 'end':
+                    continue
+
+                elif prev_tag not in self.transition_probabilities[cur_tag]:
+                    self.transition_probabilities[cur_tag][prev_tag] = 1 / (self.tag_frequency_map[prev_tag] + (4 * len(self.tag_frequency_map)) - 1)
+
+                else:
+                    self.transition_probabilities[cur_tag][prev_tag] = (self.transition_probabilities[cur_tag][prev_tag] + 1) / (self.tag_frequency_map[prev_tag] + (4 * len(self.tag_frequency_map)) - 1)
+
     def get_transition_probabilities(self):
         for tags in self.tag_frequency_map:
             self.transition_probabilities[tags] = {}
@@ -92,16 +104,7 @@ class HMM:
                     else:
                         self.transition_probabilities[line[i].split('/')[-1]][line[i - 1].split('/')[-1]] += 1
 
-        for cur_tag in self.transition_probabilities:
-            for prev_tag in self.tag_frequency_map:
-                if prev_tag == 'end':
-                    continue
-
-                elif prev_tag not in self.transition_probabilities[cur_tag]:
-                    self.transition_probabilities[cur_tag][prev_tag] = 1 / (self.tag_frequency_map[prev_tag] + (4 * len(self.tag_frequency_map)) - 1)
-
-                else:
-                    self.transition_probabilities[cur_tag][prev_tag] = (self.transition_probabilities[cur_tag][prev_tag] + 1) / (self.tag_frequency_map[prev_tag] + (4 * len(self.tag_frequency_map)) - 1)
+        self.calculate_transition_probabilities()
 
     def write_model(self):
         self.model = {
