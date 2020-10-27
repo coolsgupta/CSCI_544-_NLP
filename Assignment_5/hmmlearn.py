@@ -2,10 +2,10 @@ import sys
 import json
 from copy import deepcopy
 
+
 class HMM:
     def __init__(self, argv):
         self.training_model_file = "hmmmodel.txt"
-        self.results_file = "hmmoutput.txt"
         self.train_data_path = argv[1]
         self.train_data = self.create_train_data()
         self.tag_frequency_map = {'start': len(self.train_data), 'end': len(self.train_data)}
