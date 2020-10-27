@@ -37,6 +37,73 @@ class HMMDecode:
         fwrite = open(self.results_file, 'w', encoding='UTF-8')
         fwrite.write('\n'.join(self.results))
 
+    def get_current_model_max_probability(self, states, current_word, index, current_model):
+        for tag in states:
+            if tag == 'start' or tag == 'end':
+                continue
+
+            if current_word in self.emission_probabilities:
+                emission_probability = self.emission_probabilities[current_word][tag]
+
+            else:
+                emission_probability = 1
+
+            max_probability = {
+                'prob': 0,
+                'bp': ''
+            }
+            for lastTag in current_model[index - 1]:
+                if lastTag == 'start' or lastTag == 'end':
+                    continue
+                else:
+                    previous_probability = current_model[index - 1][lastTag]['prob'] * emission_probability * \
+                                           self.transition_probabilities[tag][lastTag]
+
+                    if previous_probability > max_probability['prob']:
+                        max_probability['prob'] = previous_probability
+                        max_probability['bp'] = lastTag
+
+            current_model[index][tag] = {}
+            current_model[index][tag]['prob'] = max_probability['prob']
+            current_model[index][tag]['bp'] = max_probability['bp']
+
+        return current_model
+
+    def get_current_model_end_probability(self, states, max_probability, current_model):
+        current_model.append({})
+        for tag in states:
+            if tag == 'end':
+                continue
+
+            else:
+                previous_probability = current_model[-2][tag]['prob'] * self.transition_probabilities['end'][tag]
+
+                if previous_probability > max_probability['prob']:
+                    max_probability['prob'] = previous_probability
+                    max_probability['bp'] = tag
+
+        current_model[-1]['end'] = {}
+        current_model[-1]['end']['prob'] = max_probability['prob']
+        current_model[-1]['end']['bp'] = max_probability['bp']
+        return current_model
+
+    def get_current_model_tag_probability(self, states, words, current_model):
+        for tag in states:
+            if tag == 'start' or tag == 'end':
+                continue
+
+            elif words[0] in self.emission_probabilities:
+                emission_probability = self.emission_probabilities[words[0]][tag]
+
+            else:
+                emission_probability = 1
+
+            current_model[0][tag] = {}
+            current_model[0][tag]['prob'] = emission_probability * self.transition_probabilities[tag]['start']
+            current_model[0][tag]['bp'] = 'start'
+
+        return current_model
+
     def get_results(self):
         for sentence in self.development_data:
             words = sentence.split()
@@ -48,19 +115,7 @@ class HMMDecode:
             else:
                 states = self.most_common_tags
 
-            for tag in states:
-                if tag == 'start' or tag == 'end':
-                    continue
-
-                elif words[0] in self.emission_probabilities:
-                    emission_probability = self.emission_probabilities[words[0]][tag]
-
-                else:
-                    emission_probability = 1
-
-                current_model[0][tag] = {}
-                current_model[0][tag]['prob'] = emission_probability * self.transition_probabilities[tag]['start']
-                current_model[0][tag]['bp'] = 'start'
+            current_model = self.get_current_model_tag_probability(states, words, current_model)
 
             for i in range(1, len(words) + 1):
                 if i == len(words):
@@ -69,22 +124,7 @@ class HMMDecode:
                         'prob': 0,
                         'bp': ''
                     }
-                    current_model.append({})
-
-                    for tag in states:
-                        if tag == 'end':
-                            continue
-
-                        else:
-                            previous_probability = current_model[-2][tag]['prob'] * self.transition_probabilities['end'][tag]
-
-                            if previous_probability > max_probability['prob']:
-                                max_probability['prob'] = previous_probability
-                                max_probability['bp'] = tag
-
-                    current_model[-1]['end'] = {}
-                    current_model[-1]['end']['prob'] = max_probability['prob']
-                    current_model[-1]['end']['bp'] = max_probability['bp']
+                    current_model = self.get_current_model_end_probability(states, max_probability, current_model)
 
                 else:
                     current_word = words[i]
@@ -95,33 +135,7 @@ class HMMDecode:
                     else:
                         states = self.most_common_tags
 
-                    for tag in states:
-                        if tag == 'start' or tag == 'end':
-                            continue
-
-                        if current_word in self.emission_probabilities:
-                            emission_probability = self.emission_probabilities[current_word][tag]
-
-                        else:
-                            emission_probability = 1
-
-                        max_probability = {
-                            'prob': 0,
-                            'bp': ''
-                        }
-                        for lastTag in current_model[i-1]:
-                            if lastTag == 'start' or lastTag == 'end':
-                                continue
-                            else:
-                                previous_probability = current_model[i-1][lastTag]['prob'] * emission_probability * self.transition_probabilities[tag][lastTag]
-
-                                if previous_probability > max_probability['prob']:
-                                    max_probability['prob'] = previous_probability
-                                    max_probability['bp'] = lastTag
-
-                        current_model[i][tag] = {}
-                        current_model[i][tag]['prob'] = max_probability['prob']
-                        current_model[i][tag]['bp'] = max_probability['bp']
+                    current_model = self.get_current_model_max_probability(states, current_word, i, current_model)
 
             self.results.append(self.generate_sentence_tag(current_model, words))
             self.write_results()
