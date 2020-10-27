@@ -62,6 +62,7 @@ class HMM:
             for word in self.word_tag_map[tag]:
                 if word not in self.emission_prob:
                     self.emission_prob[word] = {}
+
                 if tag not in self.emission_prob[word]:
                     self.emission_prob[word][tag] = self.word_tag_map[tag][word] / self.tag_frequency_map[tag]
 
@@ -74,16 +75,21 @@ class HMM:
                 if i == 0:
                     if 'start' not in self.previous_tags[line[i].split('/')[-1]]:
                         self.previous_tags[line[i].split('/')[-1]]['start'] = 1
+
                     else:
                         self.previous_tags[line[i].split('/')[-1]]['start'] += 1
+
                 elif i == len(line):
                     if line[i - 1].split('/')[-1] not in self.previous_tags['end']:
                         self.previous_tags['end'][line[i - 1].split('/')[-1]] = 1
+
                     else:
                         self.previous_tags['end'][line[i - 1].split('/')[-1]] += 1
+
                 else:
                     if line[i - 1].split('/')[-1] not in self.previous_tags[line[i].split('/')[-1]]:
                         self.previous_tags[line[i].split('/')[-1]][line[i - 1].split('/')[-1]] = 1
+
                     else:
                         self.previous_tags[line[i].split('/')[-1]][line[i - 1].split('/')[-1]] += 1
 
@@ -113,12 +119,13 @@ class HMM:
         with open(self.training_model_file, 'w') as model_file:
             model_file.write(json.dumps(self.model, indent=2))
 
+    def create_model(self):
+        self.get_most_frequent_tags()
+        self.get_emission_probability()
+        self.get_previous_tags()
+        self.get_transition_probabilities()
+        self.write_model()
+
 
 if __name__ == '__main__':
-    hmm_model = HMM(sys.argv)
-    hmm_model.get_most_frequent_tags()
-    hmm_model.get_emission_probability()
-    hmm_model.get_previous_tags()
-    hmm_model.get_transition_probabilities()
-    hmm_model.write_model()
-
+    HMM(sys.argv).create_model()
